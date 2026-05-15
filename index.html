@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ONAIR SYSTEM TERMINAL</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+JP:wght@300;400&family=Noto+Sans+SC:wght@300;400&family=Noto+Sans+TC:wght@300;400&display=swap');
+  :root{--cyan:#00e5cc;--cyan-dim:#00b8a4;--cyan-dark:#007a6d;--cyan-glow:rgba(0,229,204,0.12);--bg:#080e10;--bg-panel:#0c1416;--bg-card:#0f1a1c;--border:rgba(0,229,204,0.22);--border-bright:rgba(0,229,204,0.55);--text-main:#c8f0eb;--text-dim:#5a8c85;--text-muted:#2e5550;--amber:#e8a020;--amber-dim:rgba(232,160,32,0.13);--red:#e84040;--font-body:'Noto Sans JP',sans-serif}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text-main);font-family:var(--font-body);font-weight:300;min-height:100vh;overflow-x:hidden;position:relative}
+  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.15) 2px,rgba(0,0,0,0.15) 4px);pointer-events:none;z-index:999}
+  .container{max-width:860px;margin:0 auto;padding:40px 24px 80px;position:relative;z-index:1}
+  .header{text-align:center;margin-bottom:36px}
+  .header-logo{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.28em;color:var(--text-dim);margin-bottom:10px}
+  .header-title{font-family:'Share Tech Mono',monospace;font-size:26px;letter-spacing:.15em;color:var(--cyan);margin-bottom:4px}
+  .header-sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:.2em}
+  .header-line{width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--border-bright),transparent);margin-top:20px}
+  .status-bar{display:flex;justify-content:space-between;align-items:center;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:.15em;margin-top:8px}
+  .status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--cyan);margin-right:6px;animation:blink 2s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+  .lang-bar{display:flex;justify-content:center;gap:0;margin-bottom:32px;border:1px solid var(--border-bright);border-radius:3px;overflow:hidden;width:fit-content;margin-left:auto;margin-right:auto}
+  .lang-btn{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:.2em;padding:10px 24px;background:transparent;color:var(--text-dim);border:none;border-right:1px solid var(--border-bright);cursor:pointer;transition:all .18s}
+  .lang-btn:last-child{border-right:none}
+  .lang-btn.active{background:rgba(0,229,204,.1);color:var(--cyan)}
+  .lang-btn:hover:not(.active){color:var(--text-main);background:rgba(0,229,204,.04)}
+  .section-label{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.3em;color:var(--cyan-dim);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+  .qa-section{margin-bottom:48px}
+  .qa-item{border:1px solid var(--border);border-radius:4px;margin-bottom:8px;overflow:hidden;background:var(--bg-card);transition:border-color .2s}
+  .qa-item:hover{border-color:rgba(0,229,204,.4)}
+  .qa-question{padding:14px 18px;cursor:pointer;display:flex;align-items:center;gap:12px;user-select:none}
+  .qa-q-tag{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--cyan);letter-spacing:.1em;flex-shrink:0;border:1px solid var(--cyan-dark);padding:2px 7px;border-radius:2px}
+  .qa-q-text{font-size:14px;color:var(--text-main);flex:1;line-height:1.5}
+  .qa-chevron{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text-dim);transition:transform .25s;flex-shrink:0}
+  .qa-item.open .qa-chevron{transform:rotate(180deg);color:var(--cyan)}
+  .qa-item.open{border-color:var(--border-bright)}
+  .qa-item.open .qa-q-text{color:var(--cyan)}
+  .qa-answer{max-height:0;overflow:hidden;transition:max-height .35s ease;border-top:1px solid transparent}
+  .qa-item.open .qa-answer{max-height:500px;border-top-color:var(--border)}
+  .qa-answer-inner{padding:16px 18px 18px;display:flex;gap:12px}
+  .qa-a-tag{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--amber);letter-spacing:.1em;flex-shrink:0;border:1px solid rgba(232,160,32,.3);padding:2px 7px;border-radius:2px;height:fit-content}
+  .qa-a-text{font-size:13px;color:var(--text-main);line-height:1.85;opacity:.9}
+  .qa-note{font-size:12px;color:var(--amber);background:var(--amber-dim);border:1px solid rgba(232,160,32,.2);border-radius:3px;padding:8px 12px;margin-top:8px;font-family:'Share Tech Mono',monospace;letter-spacing:.08em;line-height:1.6}
+  .pagination{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:20px}
+  .page-btn{font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:.15em;color:var(--text-dim);border:1px solid var(--border);background:none;padding:10px 20px;border-radius:3px;cursor:pointer;transition:all .18s}
+  .page-btn:hover:not(:disabled){color:var(--cyan);border-color:var(--cyan-dim)}
+  .page-btn:disabled{opacity:.25;cursor:not-allowed}
+  .page-indicator{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:.2em;min-width:80px;text-align:center}
+  .letter-section{margin-bottom:48px}
+  .terminal-box{background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;overflow:hidden}
+  .terminal-titlebar{background:rgba(0,229,204,.05);border-bottom:1px solid var(--border);padding:8px 14px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:.2em;display:flex;align-items:center;gap:8px}
+  .terminal-body{padding:20px}
+  .form-row{margin-bottom:14px}
+  .form-label{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:.2em;margin-bottom:6px;display:block}
+  .form-input,.form-textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text-main);font-family:var(--font-body);font-weight:300;font-size:13px;padding:10px 12px;border-radius:3px;outline:none;transition:border-color .2s;caret-color:var(--cyan)}
+  .form-input:focus,.form-textarea:focus{border-color:var(--border-bright);box-shadow:0 0 0 2px var(--cyan-glow)}
+  .form-textarea{resize:vertical;min-height:100px;line-height:1.7}
+  .form-input::placeholder,.form-textarea::placeholder{color:var(--text-muted);font-size:12px}
+  .form-row-inline{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  .submit-btn{width:100%;padding:12px;background:transparent;border:1px solid var(--cyan-dim);color:var(--cyan);font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:.25em;cursor:pointer;border-radius:3px;transition:all .2s;margin-top:6px}
+  .submit-btn:hover{background:var(--cyan-glow);border-color:var(--cyan)}
+  .notice-box{background:var(--amber-dim);border:1px solid rgba(232,160,32,.22);border-radius:3px;padding:10px 14px;font-size:11px;color:var(--amber);font-family:'Share Tech Mono',monospace;letter-spacing:.08em;line-height:1.8;margin-bottom:16px}
+  .confirm-flash{display:none;text-align:center;padding:28px;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--cyan);letter-spacing:.2em;animation:fadeIn .4s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .msg-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px}
+  .msg-name{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--cyan);letter-spacing:.15em}
+  .msg-email{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:.1em}
+  .msg-time{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted)}
+  .msg-body{font-size:13px;color:var(--text-main);line-height:1.7;opacity:.85}
+  body.cjk .section-label,body.cjk .notice-box,body.cjk .lang-btn,body.cjk .submit-btn,body.cjk .page-btn,body.cjk .terminal-titlebar,body.cjk .form-label,body.cjk .header-logo,body.cjk .header-sub,body.cjk .status-bar{font-family:var(--font-body);letter-spacing:.05em}
+  html::-webkit-scrollbar{width:6px}
+  html::-webkit-scrollbar-track{background:var(--bg)}
+  html::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+  .chat-section{margin-bottom:48px}
+  .status-banner{padding:14px 18px;border-radius:4px;font-family:"Share Tech Mono",monospace;font-size:12px;letter-spacing:.15em;display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .status-banner.online{background:rgba(0,229,204,.08);border:1px solid var(--border-bright);color:var(--cyan)}
+  .status-banner.busy{background:rgba(232,160,32,.1);border:1px solid rgba(232,160,32,.3);color:var(--amber)}
+  .status-banner.offline{background:rgba(80,80,80,.15);border:1px solid rgba(150,150,150,.25);color:var(--text-dim)}
+  .status-indicator{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .status-indicator.online{background:var(--cyan);animation:blink 2s infinite}
+  .status-indicator.busy{background:var(--amber)}
+  .status-indicator.offline{background:#666}
+  .status-redirect{font-size:11px;opacity:.8;cursor:pointer;text-decoration:underline;text-underline-offset:3px;margin-left:8px}
+  .nickname-section{padding:20px;background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;margin-bottom:14px}
+  .nickname-row{display:flex;gap:8px;margin-top:8px}
+  .nickname-input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text-main);font-family:"Noto Sans JP",sans-serif;font-size:13px;padding:10px 12px;border-radius:3px;outline:none;caret-color:var(--cyan)}
+  .nickname-input:focus{border-color:var(--border-bright);box-shadow:0 0 0 2px var(--cyan-glow)}
+  .nickname-btn{font-family:"Share Tech Mono",monospace;font-size:11px;letter-spacing:.15em;color:var(--cyan);border:1px solid var(--cyan-dim);background:none;padding:10px 18px;border-radius:3px;cursor:pointer;white-space:nowrap}
+  .nickname-btn:hover{background:var(--cyan-glow)}
+  .chat-header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .end-chat-btn{font-family:"Share Tech Mono",monospace;font-size:12px;letter-spacing:.15em;color:var(--red);border:1px solid var(--red);background:none;padding:8px 18px;border-radius:3px;cursor:pointer;transition:all .2s}
+  .end-chat-btn:hover{background:rgba(232,64,64,.1)}
+  .chat-log{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:14px;padding:14px;background:var(--bg-panel);border:1px solid var(--border);border-radius:4px}
+  .chat-log::-webkit-scrollbar{width:4px}
+  .chat-log::-webkit-scrollbar-track{background:var(--bg)}
+  .chat-log::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .chat-bubble-wrap{display:flex;flex-direction:column}
+  .chat-bubble-wrap.visitor{align-items:flex-start}
+  .chat-bubble-wrap.admin{align-items:flex-end}
+  .chat-meta{font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--text-muted);margin-bottom:3px;padding:0 2px}
+  .chat-bubble{max-width:78%;padding:10px 14px;border-radius:4px;font-size:13px;line-height:1.75}
+  .chat-bubble.visitor{background:var(--bg-card);border:1px solid var(--border);color:var(--text-main)}
+  .chat-bubble.admin{background:rgba(0,229,204,.07);border:1px solid var(--border-bright);color:var(--cyan)}
+  /* Visitor-side: player on right, admin on left */
+  #visitor-section .chat-bubble-wrap.visitor{align-items:flex-end}
+  #visitor-section .chat-bubble-wrap.admin{align-items:flex-start}
+  #visitor-section .chat-bubble.visitor{background:rgba(0,229,204,.07);border:1px solid var(--border-bright);color:var(--cyan)}
+  #visitor-section .chat-bubble.admin{background:var(--bg-card);border:1px solid var(--border);color:var(--text-main)}
+  .chat-empty{text-align:center;padding:32px;font-family:"Share Tech Mono",monospace;font-size:11px;color:var(--text-muted);letter-spacing:.2em}
+  .chat-input-row{display:flex;gap:8px}
+  .chat-input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text-main);font-family:"Noto Sans JP",sans-serif;font-size:13px;padding:10px 12px;border-radius:3px;outline:none;transition:border-color .2s;caret-color:var(--cyan)}
+  .chat-input:focus{border-color:var(--border-bright);box-shadow:0 0 0 2px var(--cyan-glow)}
+  .chat-input:disabled{opacity:.35;cursor:not-allowed}
+  .chat-send-btn{font-family:"Share Tech Mono",monospace;font-size:11px;letter-spacing:.15em;color:var(--cyan);border:1px solid var(--cyan-dim);background:none;padding:10px 18px;border-radius:3px;cursor:pointer;white-space:nowrap}
+  .chat-send-btn:hover:not(:disabled){background:var(--cyan-glow)}
+  .chat-send-btn:disabled{opacity:.3;cursor:not-allowed}
+  .admin-bar{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(0,229,204,.05);border:1px solid var(--border);border-radius:4px;margin-bottom:20px;flex-wrap:wrap;gap:8px}
+  .admin-bar-left{font-family:"Share Tech Mono",monospace;font-size:11px;color:var(--cyan);letter-spacing:.15em;display:flex;align-items:center;gap:8px}
+  .admin-bar-right{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .status-btn{font-family:"Share Tech Mono",monospace;font-size:10px;letter-spacing:.12em;border:1px solid var(--border);background:none;padding:7px 14px;border-radius:3px;cursor:pointer;transition:all .2s;color:var(--text-muted)}
+  .status-btn.sel-online{color:var(--cyan);border-color:var(--cyan-dim);background:rgba(0,229,204,.08)}
+  .status-btn.sel-busy{color:var(--amber);border-color:rgba(232,160,32,.4);background:rgba(232,160,32,.08)}
+  .status-btn.sel-offline{color:var(--text-dim);border-color:rgba(150,150,150,.3);background:rgba(100,100,100,.08)}
+  .status-btn:hover{color:var(--text-main)}
+  .admin-logout-btn{font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--text-muted);border:1px solid var(--border);background:none;padding:7px 14px;border-radius:3px;cursor:pointer;letter-spacing:.12em}
+  .admin-logout-btn:hover{color:var(--cyan);border-color:var(--cyan-dim)}
+  .admin-delete-btn{font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--red);border:1px solid var(--red);background:none;padding:7px 14px;border-radius:3px;cursor:pointer;letter-spacing:.12em;transition:all .2s}
+  .admin-delete-btn:hover{background:rgba(232,64,64,.1)}
+  .delete-toolbar{display:none;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(232,64,64,.06);border:1px solid rgba(232,64,64,.3);border-radius:4px;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+  .delete-toolbar.show{display:flex}
+  .delete-toolbar-left{display:flex;align-items:center;gap:12px;font-family:"Share Tech Mono",monospace;font-size:11px;color:var(--red);letter-spacing:.12em}
+  .delete-confirm-btn{font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--red);border:1px solid var(--red);background:none;padding:7px 16px;border-radius:3px;cursor:pointer;letter-spacing:.12em}
+  .delete-confirm-btn:hover{background:rgba(232,64,64,.15)}
+  .delete-cancel-btn{font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--text-muted);border:1px solid var(--border);background:none;padding:7px 16px;border-radius:3px;cursor:pointer;letter-spacing:.12em}
+  .delete-cancel-btn:hover{color:var(--cyan);border-color:var(--cyan-dim)}
+  .thread-checkbox{width:16px;height:16px;cursor:pointer;accent-color:var(--red);flex-shrink:0;display:none}
+  .delete-mode .thread-checkbox{display:block}
+  .delete-mode .thread-header{gap:10px}
+  .select-all-label{display:flex;align-items:center;gap:6px;cursor:pointer;font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--red);letter-spacing:.1em}
+  .select-all-cb{width:14px;height:14px;accent-color:var(--red);cursor:pointer}
+  .admin-search-row{display:flex;gap:8px;margin-bottom:14px}
+  .admin-search{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text-main);font-family:"Noto Sans JP",sans-serif;font-size:13px;padding:9px 12px;border-radius:3px;outline:none;caret-color:var(--cyan)}
+  .admin-search:focus{border-color:var(--border-bright)}
+  .admin-search::placeholder{color:var(--text-muted);font-size:12px}
+  .admin-search-btn{font-family:"Share Tech Mono",monospace;font-size:10px;letter-spacing:.15em;color:var(--cyan);border:1px solid var(--cyan-dim);background:none;padding:9px 16px;border-radius:3px;cursor:pointer}
+  .admin-search-btn:hover{background:var(--cyan-glow)}
+  .admin-pagination{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px}
+  .thread-card{background:var(--bg-card);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:8px}
+  .thread-header{padding:12px 16px;display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer;transition:background .15s;gap:12px}
+  .thread-header:hover{background:rgba(0,229,204,.03)}
+  .thread-name{font-family:"Share Tech Mono",monospace;font-size:11px;color:var(--cyan);letter-spacing:.12em}
+  .thread-lang{font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--text-dim);margin-left:8px}
+  .thread-time{font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--text-muted);flex-shrink:0}
+  .thread-preview{font-size:12px;color:var(--text-dim);margin-top:3px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:380px}
+  .thread-body{display:none;border-top:1px solid var(--border)}
+  .thread-body.open{display:block}
+  .thread-log{max-height:300px;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+  .thread-reply-row{display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--border);background:rgba(0,229,204,.02)}
+  .unread-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);flex-shrink:0;animation:blink 1.5s infinite;margin-right:4px;display:inline-block}
+  #admin-login-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+  #admin-login-screen.show{display:flex}
+  .pass-input{background:var(--bg-panel);border:1px solid var(--border-bright);color:var(--text-main);font-family:"Share Tech Mono",monospace;font-size:14px;padding:12px 20px;border-radius:3px;outline:none;caret-color:var(--cyan);text-align:center;letter-spacing:.3em;width:260px}
+  .pass-input:focus{border-color:var(--cyan)}
+  .pass-enter-btn{font-family:"Share Tech Mono",monospace;font-size:11px;letter-spacing:.25em;color:var(--cyan);border:1px solid var(--cyan-dim);background:none;padding:10px 28px;border-radius:3px;cursor:pointer}
+  .pass-enter-btn:hover{background:var(--cyan-glow)}
+</style>
+</head>
+<body>
+
+<div id="admin-login-screen">
+  <div style="font-family:Share Tech Mono,monospace;font-size:12px;color:var(--cyan);letter-spacing:.3em;margin-bottom:4px">ADMIN ACCESS</div>
+  <input id="pass-input" class="pass-input" type="password" placeholder="PASSWORD" onkeydown="if(event.key==='Enter')checkPass()">
+  <button class="pass-enter-btn" onclick="checkPass()">ENTER</button>
+  <div id="pass-err" style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--red);letter-spacing:.15em;display:none">WRONG PASSWORD</div>
+</div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-logo">373 STUDIO — BITSUMMIT 2026</div>
+    <div class="header-title">ON AIR TERMINAL</div>
+    <div class="header-sub">放送開始！タクシー推理事件簿</div>
+    <div class="header-line"></div>
+    <div class="status-bar">
+      <span><span class="status-dot"></span>SYSTEM ONLINE</span>
+      <span id="clock">--:--:--</span>
+      <span>KYOTO, JAPAN</span>
+    </div>
+  </div>
+
+  <div class="lang-bar" id="lang-bar">
+    <button class="lang-btn active" id="btn-ja" onclick="setLang('ja')">日本語</button>
+    <button class="lang-btn" id="btn-en" onclick="setLang('en')">ENGLISH</button>
+    <button class="lang-btn" id="btn-zh" onclick="setLang('zh')">简体中文</button>
+    <button class="lang-btn" id="btn-tw" onclick="setLang('tw')">繁體中文</button>
+  </div>
+
+  <div class="qa-section" id="qa-section">
+    <div class="section-label" id="qa-label">FAQ // よくある質問</div>
+    <div id="qa-list"></div>
+    <div class="pagination">
+      <button class="page-btn" id="prev-btn" onclick="changePage(-1)" disabled>&#9664; 前へ</button>
+      <span class="page-indicator" id="page-indicator">01 / 04</span>
+      <button class="page-btn" id="next-btn" onclick="changePage(1)">次へ &#9654;</button>
+    </div>
+  </div>
+
+  <div id="visitor-section">
+    <div class="chat-section">
+      <div class="section-label" id="chat-label">LIVE CHAT // リアルタイムチャット</div>
+      <div id="status-banner" class="status-banner offline">
+        <span class="status-indicator offline" id="status-dot"></span>
+        <span id="status-text">OFFLINE</span>
+      </div>
+      <div id="nickname-section" style="display:none" class="nickname-section">
+        <div class="form-label" id="nickname-label">ニックネームを入力してください</div>
+        <div class="nickname-row">
+          <input class="nickname-input" id="nickname-input" type="text" onkeydown="if(event.key==='Enter')startChat()">
+          <button class="nickname-btn" id="nickname-btn" onclick="startChat()">チャットを開始</button>
+        </div>
+      </div>
+      <div id="chat-area" style="display:none">
+        <div class="chat-header-row">
+          <div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--text-dim);letter-spacing:.15em" id="chat-user-label"></div>
+          <button class="end-chat-btn" id="end-chat-btn" onclick="endConversation()">対話を終了</button>
+        </div>
+        <div class="chat-log" id="chat-log">
+          <div class="chat-empty" id="chat-empty">—</div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="chat-input" placeholder="—" disabled onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="chat-send-btn" id="chat-send" onclick="sendChat()" disabled>SEND</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="letter-section">
+      <div class="section-label" id="msg-label">留言箱 // メッセージボックス</div>
+      <div class="terminal-box" id="msg-box">
+        <div class="terminal-titlebar"><span class="status-dot"></span><span id="form-title">MESSAGE TRANSMISSION INTERFACE</span></div>
+        <div class="terminal-body">
+          <div class="notice-box" id="notice-text"></div>
+          <div id="form-area">
+            <div class="form-row">
+              <label class="form-label" id="label-msg">メッセージ *</label>
+              <textarea class="form-textarea" id="msg-body"></textarea>
+            </div>
+            <div class="form-row-inline">
+              <div>
+                <label class="form-label" id="label-name">お名前 (任意)</label>
+                <input class="form-input" id="msg-name" type="text">
+              </div>
+              <div>
+                <label class="form-label" id="label-email">メールアドレス (任意)</label>
+                <input class="form-input" id="msg-email" type="email" placeholder="reply@example.com">
+              </div>
+            </div>
+            <button class="submit-btn" id="submit-btn" onclick="submitMsg()">&#9654; 送信する</button>
+          </div>
+          <div class="confirm-flash" id="confirm-msg" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin-section" style="display:none">
+    <div class="admin-bar">
+      <div class="admin-bar-left"><span class="status-dot"></span>ADMIN MODE</div>
+      <div class="admin-bar-right">
+        <button class="status-btn" id="abtn-online" onclick="setDevStatus('online')">&#9679; ONLINE</button>
+        <button class="status-btn" id="abtn-busy" onclick="setDevStatus('busy')">&#9679; BUSY</button>
+        <button class="status-btn" id="abtn-offline" onclick="setDevStatus('offline')">&#9679; OFFLINE</button>
+        <button class="admin-delete-btn" onclick="enterDeleteMode()">&#10006; DELETE</button>
+        <button class="admin-logout-btn" onclick="doLogout()">LOGOUT</button>
+      </div>
+    </div>
+    <div class="section-label">THREADS // チャット履歴</div>
+    <div class="delete-toolbar" id="delete-toolbar">
+      <div class="delete-toolbar-left">
+        <label class="select-all-label"><input type="checkbox" class="select-all-cb" id="select-all-cb" onchange="toggleSelectAll()"> SELECT ALL</label>
+        <span id="delete-count-label">0 selected</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="delete-confirm-btn" onclick="confirmDelete()">&#10006; DELETE SELECTED</button>
+        <button class="delete-cancel-btn" onclick="exitDeleteMode()">CANCEL</button>
+      </div>
+    </div>
+    <div class="admin-search-row">
+      <input class="admin-search" id="admin-search" type="text" placeholder="Search by name…" oninput="adminSearch()">
+    </div>
+    <div id="thread-list"></div>
+    <div class="admin-pagination">
+      <button class="page-btn" id="admin-prev-btn" onclick="adminChangePage(-1)" disabled>&#9664; PREV</button>
+      <span class="page-indicator" id="admin-page-indicator">01 / 01</span>
+      <button class="page-btn" id="admin-next-btn" onclick="adminChangePage(1)" disabled>NEXT &#9654;</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+var ADMIN_PASS = '5v2n8s3e';
+var IS_ADMIN = new URLSearchParams(location.search).get('admin') === 'true';
+var FB = 'https://onair-terminal-talk-default-rtdb.firebaseio.com';
+var lang = 'ja';
+var currentPage = 0;
+var openIndex = null;
+var PER_PAGE_QA = 4;
+var currentStatus = 'offline';
+
+// Visitor state
+var visitorKey = null;
+var visitorName = null;
+var lastActivityTime = Date.now();
+var IDLE_TIMEOUT = 10 * 60 * 1000; // 10 min
+var idleTimer = null;
+var chatPollTimer = null;
+var lastMsgTs = 0;
+
+// Admin state
+var adminSearchQuery = '';
+var adminPage = 0;
+var THREADS_PER_PAGE = 10;
+var openThreadKey = null;
+var allThreads = [];
+
+const QA=[
+  {
+    ja:{q:"このゲームはどうやって遊べますか？並ばないといけませんか？",a:"整理券をお受け取りいただき、番号が呼ばれるまでお待ちください。1回のプレイ時間は約30分です。"},
+    en:{q:"How can I play here? Do I need to line up?",a:"Please take a numbered ticket and wait to be called. Each play session is about 30 minutes."},
+    zh:{q:"要怎么玩这个游戏，要排队吗？",a:"需要拿整理券等候叫号。每次试玩时间约30分钟。"},
+    tw:{q:"要怎麼玩這個遊戲，要排隊嗎？",a:"需要拿整理券等候叫號。每次試玩時間約30分鐘。"}
+  },
+  {
+    ja:{q:"どんなジャンルのゲームですか？",a:"ピクセルアートの会話駆動型推理ゲームです。プレイヤーはタクシーの車載AIとなり、乗客の会話を傍受しながらラジオ放送の内容を編集することで、間接的に事件の展開を操作します。"},
+    en:{q:"What genre is this game?",a:"It's a pixel art, dialogue-driven mystery game. You play as a taxi's onboard AI, intercepting passenger conversations and editing the in-car radio broadcast to indirectly steer the course of each case."},
+    zh:{q:"这是什么类型的游戏？",a:"像素风对话驱动推理游戏。玩家扮演出租车车载AI，通过截听乘客对话、编辑车内广播内容来间接推动案件走向。"},
+    tw:{q:"這是什麼類型的遊戲？",a:"像素風對話驅動推理遊戲。玩家扮演計程車車載AI，透過截聽乘客對話、編輯車內廣播內容來間接推動案件走向。"}
+  },
+  {
+    ja:{q:"ゲームはどんなストーリーですか？",a:"架空の都市を舞台に、タクシーの車載AIとして様々な事件に巻き込まれていきます。ラジオ放送の内容を操作することで運転手の判断に影響を与え、間接的に事件の行方を導いていきます。"},
+    en:{q:"What's the story about?",a:"Set in a fictional city, you're a taxi's onboard AI who gets caught up in various cases while on the job. By manipulating the radio broadcast, you influence the driver's decisions and indirectly shape how each case unfolds."},
+    zh:{q:"游戏大概讲的是什么故事？",a:"故事发生在一个架空城市，玩家作为出租车的车载AI，在接单过程中卷入各类案件。通过操控广播内容影响司机判断，间接推动事件走向。"},
+    tw:{q:"遊戲大概講的是什麼故事？",a:"故事發生在一個架空城市，玩家作為計程車的車載AI，在接單過程中捲入各類案件。透過操控廣播內容影響司機判斷，間接推動事件走向。"}
+  },
+  {
+    ja:{q:"操作方法を教えてください。難しい操作はありますか？",a:"操作はとてもシンプルで、すべてマウスクリックで進めます。充実したチュートリアルも用意されており、反射神経は不要です。プレイヤー自身のペースで楽しめます。"},
+    en:{q:"How do you play? Are there any difficult controls?",a:"Very simple — everything is mouse-click based. There's a full tutorial built in, no reflex skills required, and you play at your own pace."},
+    zh:{q:"如何操作？操作难吗？",a:"操作非常简单，全程鼠标点击即可。游戏内置了完整的新手引导，没有反应速度要求，节奏由玩家自己掌控。"},
+    tw:{q:"如何操作？操作難嗎？",a:"操作非常簡單，全程滑鼠點擊即可。遊戲內建完整的新手引導，沒有反應速度要求，節奏由玩家自己掌控。"}
+  },
+  {
+    ja:{q:"エンディングはいくつありますか？",a:"デモ版には4つのエンディングがあります。製品版ではさらに多くの分岐ルートとエンディングが用意される予定です。"},
+    en:{q:"How many endings are there?",a:"The demo has 4 endings. The full game is planned to have more branching routes and endings."},
+    zh:{q:"有几个结局？",a:"Demo部分有4个结局。完整版目前规划了多条分支路线，结局数量会更多。"},
+    tw:{q:"有幾個結局？",a:"Demo部分有4個結局。完整版目前規劃了多條分支路線，結局數量會更多。"}
+  },
+  {
+    ja:{q:"ゲームのボリュームとプレイ時間は？",a:"デモ版のプレイ時間は読むペースによりますが30〜60分程度です。4種類のエンディングをすべて回収する場合も1時間ほどで楽しめます。製品版はプロローグと5つの事件で構成され、1周目のクリアは約5時間を想定しています。"},
+    en:{q:"How long is the game? And the demo?",a:"The demo takes around 30–60 minutes depending on reading speed. Collecting all 4 endings takes about 1 hour in total. The full game includes a prologue and five cases, with a single playthrough estimated at around 5 hours."},
+    zh:{q:"游戏流程有多长？Demo呢？",a:"Demo根据阅读速度约30～60分钟。收集全部4个结局也只需约1小时。完整版包含序章加五个案件，单周目流程预计约5小时。"},
+    tw:{q:"遊戲流程有多長？Demo呢？",a:"Demo根據閱讀速度約30～60分鐘。收集全部4個結局也只需約1小時。完整版包含序章加五個案件，單周目流程預計約5小時。"}
+  },
+  {
+    ja:{q:"どんなゲームに近いですか？",a:"ゲームプレイの面ではOrwellやBeholderのような情報操作系ゲームに近く、ナラティブのスタイルは逆転裁判や極限脱出シリーズに通じるところがあります。"},
+    en:{q:"What games is this similar to?",a:"In terms of gameplay, it's closest to information-manipulation games like Orwell and Beholder. The narrative style has similarities to Ace Attorney and the Zero Escape series."},
+    zh:{q:"和哪些游戏比较类似？",a:"玩法上接近Orwell、Beholder等信息操控类游戏，叙事风格上与逆转裁判、极限脱出系列有一定相似之处。"},
+    tw:{q:"和哪些遊戲比較類似？",a:"玩法上接近Orwell、Beholder等資訊操控類遊戲，敘事風格上與逆轉裁判、極限脫出系列有一定相似之處。"}
+  },
+  {
+    ja:{q:"攻略はありますか？",a:"公式攻略はありません。このゲームに唯一の正解はなく、自由に探索しながら楽しんでいただくことを想定しています。"},
+    en:{q:"Is there a walkthrough or guide?",a:"There's no official guide. The game doesn't have a single correct answer — we encourage players to explore freely."},
+    zh:{q:"有攻略吗？",a:"目前没有官方攻略。游戏本身没有唯一解，鼓励玩家自由探索。"},
+    tw:{q:"有攻略嗎？",a:"目前沒有官方攻略。遊戲本身沒有唯一解，鼓勵玩家自由探索。"}
+  },
+  {
+    ja:{q:"配信・録画・撮影はできますか？",a:"もちろん大歓迎です。制限は一切ありません。"},
+    en:{q:"Can I stream, record, or take photos?",a:"Absolutely welcome — no restrictions at all."},
+    zh:{q:"可以直播、录像或拍照吗？",a:"完全欢迎，没有任何限制。"},
+    tw:{q:"可以直播、錄像或拍照嗎？",a:"完全歡迎，沒有任何限制。"}
+  },
+  {
+    ja:{q:"リリース時期・価格・プラットフォームは？",a:"2026年11月末にSteam（PC）にて正式リリース予定です。価格は1,000円前後を予定しています。早期アクセスの予定はなく、コンシューマー版・モバイル版も現時点では未定です。"},
+    en:{q:"When, where, and how much?",a:"We're targeting a release on Steam (PC) in late November 2026, priced at around 1,000 yen. No Early Access planned, and no console or mobile versions at this stage."},
+    zh:{q:"发售时间、平台和价格？",a:"预计2026年11月底在Steam（PC）正式发售，售价约1000日元。目前没有EA计划，主机版和移动端暂无计划。"},
+    tw:{q:"發售時間、平台和價格？",a:"預計2026年11月底在Steam（PC）正式發售，售價約1000日圓。目前沒有EA計畫，主機版和行動端暫無計畫。"}
+  },
+  {
+    ja:{q:"ゲームはもうSteamで配信されていますか？",a:"デモ版は2026年2月にSteamで公開済みで、無料でダウンロードしてプレイできます。製品版は2026年11月末のリリースを予定しています。"},
+    en:{q:"Is the game already on Steam?",a:"The demo has been available on Steam since February 2026 and is free to download. The full game is planned for release in late November 2026."},
+    zh:{q:"游戏现在已经发布在Steam上了吗？",a:"Demo已于2026年2月在Steam上线，可以免费下载试玩。正式版预计2026年11月底发售。"},
+    tw:{q:"遊戲現在已經發布在Steam上了嗎？",a:"Demo已於2026年2月在Steam上線，可以免費下載試玩。正式版預計2026年11月底發售。"}
+  },
+  {
+    ja:{q:"どのエンジンで開発していますか？",a:"Unreal Engine 5です。開発初期はドライブシステムを含む設計だったためUEを選びました。その後システムを削除しましたが、蓄積したアセットを活かすためUEで開発を続けています。"},
+    en:{q:"What engine is the game built in?",a:"Unreal Engine 5. Early in development the game included a driving system so we chose UE for its 3D strengths. We later cut that system but decided to stick with UE to make use of the assets we'd already built."},
+    zh:{q:"游戏用什么引擎开发的？",a:"Unreal Engine 5。游戏早期设计包含驾驶系统，当时选择UE是因为其3D方面的优势。后来删除了驾驶部分，但为了不浪费已有资产积累，继续沿用UE开发。"},
+    tw:{q:"遊戲用什麼引擎開發的？",a:"Unreal Engine 5。遊戲早期設計包含駕駛系統，當時選擇UE是因為其3D方面的優勢。後來刪除了駕駛部分，但為了不浪費已有資產積累，繼續沿用UE開發。"}
+  },
+  {
+    ja:{q:"自己紹介をお願いします。チームはどんな構成ですか？",a:"373 STUDIOというインディースタジオです。プログラム・シナリオ・ディレクション・美術・音楽はすべて制作人一人が担当しています。現在は中国を拠点に活動しており、今後一部の美術・音楽を外部に委託する予定ですが、開発の核は引き続き一人で進めています。正式な法人登記はまだしていません。"},
+    en:{q:"Could you introduce yourself and your team?",a:"We're 373 STUDIO. Programming, writing, direction, art, and music are all handled by one person. We're based in China, and while some art and audio work will be outsourced going forward, the core development remains a solo effort. We haven't formally registered as a company yet."},
+    zh:{q:"请介绍一下你自己和团队。",a:"我们是373 STUDIO。程序、剧本、导演、美术、音乐目前全部由制作人一人承担。工作室以中国为据点，后续部分美术和音效会外包，但核心开发仍由一人推进。目前尚未正式注册公司。"},
+    tw:{q:"請介紹一下你自己和團隊。",a:"我們是373 STUDIO。程式、劇本、導演、美術、音樂目前全部由製作人一人承擔。工作室以中國為據點，後續部分美術和音效會外包，但核心開發仍由一人推進。目前尚未正式登記公司。"}
+  },
+  {
+    ja:{q:"このゲームのアイデアはどこから生まれましたか？",a:"制作人がある夜、タクシーに乗った体験がきっかけです。中国のタクシー運転手はよく2台のスマートフォンを持っていて、1台はナビや配車アプリ用、もう1台はプライベート用です。ある時、2台が同時に異なる音声を流していて、その二つの情報がたまたま繋がって一つの文脈になる瞬間があり、「この情報の組み合わせで物語が作れる」と閃いたのがこのゲームの原点です。"},
+    en:{q:"Where did the idea for this game come from?",a:"It came from a late-night taxi ride. Drivers in China often carry two phones — one for navigation and ride-hailing apps, one for personal use. At one point both were playing audio at the same time, and the two streams of information accidentally lined up into something coherent. That moment — the idea that combining pieces of information could form a narrative — became the seed of this game."},
+    zh:{q:"这个游戏的创意从何而来？",a:"源于制作人的一次深夜乘车经历。中国的出租车司机通常有两部手机，一部用来导航接单，另一部用于日常生活。有一次两部手机同时在播报不同的内容，但那些信息偶然组合在一起，形成了一段上下文通顺的语句。制作人当时灵光一现——用信息的组合来构建叙事，就成了这个游戏的起点。"},
+    tw:{q:"這個遊戲的創意從何而來？",a:"源於製作人的一次深夜乘車經歷。中國的計程車司機通常有兩部手機，一部用來導航接單，另一部用於日常生活。有一次兩部手機同時播報不同的內容，但那些資訊偶然組合在一起，形成了一段上下文通順的語句。製作人當時靈光一現——用資訊的組合來構建敘事，就成了這個遊戲的起點。"}
+  },
+  {
+    ja:{q:"開発で印象的だったこと、または苦労したことはありますか？",a:"一人でUE5を使ったピクセルアートゲームを作るというのは技術的な挑戦が多く、特にシステム設計と物語の整合性を同時に保つことが難しかったです。一方で、展会でプレイヤーがシステムを理解して思わず声を上げてくれた瞬間は、開発の苦労が報われた気がしました。"},
+    en:{q:"Was there anything memorable or particularly challenging during development?",a:"Building a pixel art game in UE5 solo came with a lot of technical hurdles — particularly keeping the game systems and the narrative logic consistent at the same time. But seeing players at events suddenly grasp the mechanic and react out loud made it all feel worthwhile."},
+    zh:{q:"开发中有什么印象深刻或特别困难的事吗？",a:"一个人在UE5上做像素风游戏有很多技术挑战，尤其是同时保持系统设计和剧情逻辑的一致性。但在展会上看到玩家突然理解玩法、忍不住出声的瞬间，感觉一切都值了。"},
+    tw:{q:"開發中有什麼印象深刻或特別困難的事嗎？",a:"一個人在UE5上做像素風遊戲有很多技術挑戰，尤其是同時保持系統設計和劇情邏輯的一致性。但在展會上看到玩家突然理解玩法、忍不住出聲的瞬間，感覺一切都值了。"}
+  },
+  {
+    ja:{q:"もっと詳しく知りたい場合はどこを見ればいいですか？",a:"SteamのストアページでデモをDLいただけるほか、ウィッシュリスト登録でリリース通知も受け取れます。公式X（Twitter）でも開発情報を発信しています。下のフォームからメッセージをいただければ、開発者より直接ご返信いたします。"},
+    en:{q:"Where can I go to learn more or stay updated?",a:"You can download the demo and wishlist the game on Steam to get notified at launch. We also post development updates on our official X (Twitter). Feel free to leave a message in the form below — the developer will reply directly."},
+    zh:{q:"想了解更多的话去哪里看？",a:"可以在Steam下载Demo并加入愿望单，发售时会收到通知。官方X（Twitter）也会发布开发资讯。也欢迎通过下方表单留言，开发者会直接回复。"},
+    tw:{q:"想了解更多的話去哪裡看？",a:"可以在Steam下載Demo並加入願望清單，發售時會收到通知。官方X（Twitter）也會發布開發資訊。也歡迎透過下方表單留言，開發者會直接回覆。"}
+  }
+];
+const UI={
+  ja:{qaLabel:'FAQ // よくある質問',msgLabel:'留言箱 // メッセージボックス',formTitle:'MESSAGE TRANSMISSION INTERFACE',notice:'＊ このフォームは匿名で送信されます<br>＊ メールアドレスを入力された場合、後日開発者より返信いたします',labelMsg:'メッセージ *',labelName:'お名前 (任意)',labelEmail:'メールアドレス (任意)',submitBtn:'▶ 送信する',confirmMain:'✓ MESSAGE RECEIVED',confirmSub:'ありがとうございます。',placeholder:'ゲームへの感想、質問、なんでもどうぞ…',placeholderName:'匿名',prevBtn:'◀ 前へ',nextBtn:'次へ ▶'},
+  en:{qaLabel:'FAQ // FREQUENTLY ASKED QUESTIONS',msgLabel:'MESSAGE BOX',formTitle:'MESSAGE TRANSMISSION INTERFACE',notice:'＊ This form is anonymous<br>＊ Leave your email if you would like a reply from the developer',labelMsg:'MESSAGE *',labelName:'NAME (optional)',labelEmail:'EMAIL (optional)',submitBtn:'▶ TRANSMIT MESSAGE',confirmMain:'✓ MESSAGE RECEIVED',confirmSub:'Thank you for your message.',placeholder:'Questions, feedback, anything is welcome...',placeholderName:'Anonymous',prevBtn:'◀ PREV',nextBtn:'NEXT ▶'},
+  zh:{qaLabel:'FAQ // 常见问题',msgLabel:'留言箱',formTitle:'留言发送界面',notice:'＊ 本表单为匿名提交<br>＊ 如填写邮箱，开发者将在事后直接回复您',labelMsg:'留言内容 *',labelName:'昵称（可选）',labelEmail:'邮箱（可选）',submitBtn:'▶ 发送留言',confirmMain:'✓ 留言已收到',confirmSub:'感谢您的留言。',placeholder:'游戏感想、问题，什么都欢迎…',placeholderName:'匿名',prevBtn:'◀ 上一页',nextBtn:'下一页 ▶'},
+  tw:{qaLabel:'FAQ // 常見問題',msgLabel:'留言箱',formTitle:'留言發送介面',notice:'＊ 本表單為匿名提交<br>＊ 如填寫信箱，開發者將在事後直接回覆您',labelMsg:'留言內容 *',labelName:'暱稱（可選）',labelEmail:'信箱（可選）',submitBtn:'▶ 發送留言',confirmMain:'✓ 留言已收到',confirmSub:'感謝您的留言。',placeholder:'遊戲感想、問題，什麼都歡迎…',placeholderName:'匿名',prevBtn:'◀ 上一頁',nextBtn:'下一頁 ▶'}
+};
+const FONTS={ja:"'Noto Sans JP',sans-serif",en:"'Noto Sans JP',sans-serif",zh:"'Noto Sans SC',sans-serif",tw:"'Noto Sans TC',sans-serif"};
+
+var STATUS_TEXT = {
+  ja:{ online:'開発者がオンラインです。お気軽にどうぞ！', busy:'現在対応中です。しばらくお待ちいただくか、', offline:'現在オフラインです。', redirect:'下の留言欄をご利用ください →', ph:'メッセージを入力…', nameLabel:'ニックネームを入力してください', nameBtn:'チャットを開始', endBtn:'対話を終了' },
+  en:{ online:'Developer is online. Feel free to chat!', busy:'Currently busy. Please wait or ', offline:'Currently offline. ', redirect:'use the message form below →', ph:'Type a message…', nameLabel:'Enter your nickname', nameBtn:'Start Chat', endBtn:'End Chat' },
+  zh:{ online:'开发者在线，欢迎随时聊天！', busy:'目前正忙，请稍候或', offline:'目前不在线，', redirect:'使用下方留言栏 →', ph:'输入消息…', nameLabel:'请输入昵称', nameBtn:'开始对话', endBtn:'结束对话' },
+  tw:{ online:'開發者在線，歡迎隨時聊天！', busy:'目前正忙，請稍候或', offline:'目前不在線，', redirect:'使用下方留言欄 →', ph:'輸入訊息…', nameLabel:'請輸入暱稱', nameBtn:'開始對話', endBtn:'結束對話' }
+};
+var CHAT_LABEL = { ja:'LIVE CHAT // リアルタイムチャット', en:'LIVE CHAT // REALTIME CHAT', zh:'LIVE CHAT // 实时对话', tw:'LIVE CHAT // 即時對話' };
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fbGet(p){ return fetch(FB+p+'.json').then(function(r){return r.json();}); }
+function fbSet(p,d){ return fetch(FB+p+'.json',{method:'PUT',body:JSON.stringify(d)}); }
+function fbPatch(p,d){ return fetch(FB+p+'.json',{method:'PATCH',body:JSON.stringify(d)}); }
+function fbPush(p,d){ return fetch(FB+p+'.json',{method:'POST',body:JSON.stringify(d)}); }
+function fbDelete(p){ return fetch(FB+p+'.json',{method:'DELETE'}); }
+
+var deleteMode = false;
+
+// ── LANG & UI ──
+function setLang(l) {
+  lang=l; openIndex=null; currentPage=0;
+  ['ja','en','zh','tw'].forEach(function(k){ document.getElementById('btn-'+k).classList.toggle('active',k===l); });
+  document.documentElement.style.setProperty('--font-body',FONTS[l]);
+  document.body.classList.toggle('cjk',l==='zh'||l==='tw');
+  applyUI(); renderQA(); applyStatus(currentStatus);
+}
+
+function applyUI() {
+  var t=UI[lang], st=STATUS_TEXT[lang];
+  document.getElementById('qa-label').textContent=t.qaLabel;
+  document.getElementById('chat-label').textContent=CHAT_LABEL[lang];
+  document.getElementById('msg-label').textContent=t.msgLabel;
+  document.getElementById('form-title').textContent=t.formTitle;
+  document.getElementById('notice-text').innerHTML=t.notice;
+  document.getElementById('label-msg').textContent=t.labelMsg;
+  document.getElementById('label-name').textContent=t.labelName;
+  document.getElementById('label-email').textContent=t.labelEmail;
+  document.getElementById('submit-btn').textContent=t.submitBtn;
+  document.getElementById('msg-body').placeholder=t.placeholder;
+  document.getElementById('msg-name').placeholder=t.placeholderName;
+  document.getElementById('prev-btn').textContent=t.prevBtn;
+  document.getElementById('next-btn').textContent=t.nextBtn;
+  document.getElementById('nickname-label').textContent=st.nameLabel;
+  document.getElementById('nickname-btn').textContent=st.nameBtn;
+  document.getElementById('end-chat-btn').textContent=st.endBtn;
+  var cm=document.getElementById('confirm-msg');
+  cm.innerHTML=t.confirmMain+'<span style="font-size:10px;color:var(--text-dim);margin-top:6px;display:block;">'+t.confirmSub+'</span>';
+}
+
+// ── QA ──
+function renderQA() {
+  var list=document.getElementById('qa-list'); list.innerHTML='';
+  var total=QA.length, tp=Math.ceil(total/PER_PAGE_QA);
+  var start=currentPage*PER_PAGE_QA, end=Math.min(start+PER_PAGE_QA,total);
+  QA.slice(start,end).forEach(function(item,li){
+    var gi=start+li, d=item[lang];
+    var el=document.createElement('div'); el.className='qa-item'+(openIndex===gi?' open':'');
+    var qrow='<div class="qa-question" onclick="toggleQA('+gi+')"><span class="qa-q-tag">Q'+String(gi+1).padStart(2,'0')+'</span><span class="qa-q-text">'+esc(d.q)+'</span><span class="qa-chevron">&#9662;</span></div>';
+    var arow='<div class="qa-answer"><div class="qa-answer-inner"><span class="qa-a-tag">ANS</span><span class="qa-a-text">'+(d.a?esc(d.a):'')+(d.note?'<div class="qa-note">'+d.note+'</div>':'')+'</span></div></div>';
+    el.innerHTML=qrow+arow; list.appendChild(el);
+  });
+  document.getElementById('page-indicator').textContent=String(currentPage+1).padStart(2,'0')+' / '+String(tp).padStart(2,'0');
+  document.getElementById('prev-btn').disabled=currentPage===0;
+  document.getElementById('next-btn').disabled=currentPage>=tp-1;
+}
+function toggleQA(gi){ openIndex=openIndex===gi?null:gi; renderQA(); }
+function changePage(dir){ var tp=Math.ceil(QA.length/PER_PAGE_QA); currentPage=Math.max(0,Math.min(tp-1,currentPage+dir)); openIndex=null; renderQA(); }
+
+// ── STATUS ──
+function applyStatus(s) {
+  currentStatus=s;
+  var banner=document.getElementById('status-banner');
+  var dot=document.getElementById('status-dot');
+  var text=document.getElementById('status-text');
+  var st=STATUS_TEXT[lang];
+  banner.className='status-banner '+s;
+  dot.className='status-indicator '+s;
+  if(s==='online'){
+    text.textContent=st.online;
+    // Show nickname entry or chat depending on state
+    if(!visitorName) showNicknameEntry();
+    else showChatArea();
+  } else {
+    text.textContent=st[s];
+    var link=document.createElement('span');
+    link.className='status-redirect'; link.textContent=st.redirect;
+    link.onclick=function(){ document.getElementById('msg-box').scrollIntoView({behavior:'smooth'}); };
+    text.appendChild(link);
+    hideChat();
+  }
+}
+
+function showNicknameEntry(){
+  document.getElementById('nickname-section').style.display='block';
+  document.getElementById('chat-area').style.display='none';
+}
+function showChatArea(){
+  document.getElementById('nickname-section').style.display='none';
+  document.getElementById('chat-area').style.display='block';
+  document.getElementById('chat-input').disabled=false;
+  document.getElementById('chat-send').disabled=false;
+  document.getElementById('chat-input').placeholder=STATUS_TEXT[lang].ph;
+  document.getElementById('chat-user-label').textContent=visitorName;
+  document.getElementById('end-chat-btn').textContent=STATUS_TEXT[lang].endBtn;
+  document.getElementById('chat-input').focus();
+}
+function hideChat(){
+  document.getElementById('nickname-section').style.display='none';
+  document.getElementById('chat-area').style.display='none';
+}
+
+// ── IDLE TIMER ──
+function resetIdle(){
+  lastActivityTime=Date.now();
+}
+function checkIdle(){
+  if(visitorName && Date.now()-lastActivityTime>IDLE_TIMEOUT){
+    endConversation();
+  }
+}
+function endConversation(){
+  clearInterval(chatPollTimer); clearInterval(idleTimer);
+  chatPollTimer=null; idleTimer=null;
+  visitorKey=null; visitorName=null; lastMsgTs=0;
+  // Clear chat log
+  var log=document.getElementById('chat-log');
+  log.innerHTML='<div class="chat-empty" id="chat-empty">—</div>';
+  document.getElementById('nickname-input').value='';
+  if(currentStatus==='online') showNicknameEntry();
+  else hideChat();
+}
+
+// ── VISITOR NICKNAME & CHAT ──
+function startChat(){
+  var val=document.getElementById('nickname-input').value.trim();
+  if(!val){ document.getElementById('nickname-input').focus(); return; }
+  visitorName=val;
+  resetIdle();
+  fbPush('/chats',{meta:{lang:lang,name:val,time:new Date().toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'}),unread:false,lastMsg:'',lastTime:'',active:true}}).then(function(r){
+    return r.json();
+  }).then(function(ref){
+    visitorKey=ref.name;
+    showChatArea();
+    chatPollTimer=setInterval(pollChatReplies,3000);
+    idleTimer=setInterval(checkIdle,30000);
+  });
+}
+
+function sendChat(){
+  var input=document.getElementById('chat-input');
+  var body=input.value.trim();
+  if(!body||currentStatus!=='online'||!visitorName||!visitorKey) return;
+  resetIdle();
+  var time=new Date().toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'});
+  var ts=Date.now();
+  fbPush('/chats/'+visitorKey+'/messages',{role:'visitor',body:body,name:visitorName,time:time,ts:ts});
+  fbPatch('/chats/'+visitorKey+'/meta',{unread:true,lastMsg:body,lastTime:time});
+  appendVisitorBubble('visitor',visitorName,body,time);
+  input.value=''; input.focus();
+  lastMsgTs=Math.max(lastMsgTs,ts);
+}
+
+function pollChatReplies(){
+  if(!visitorKey) return;
+  fbGet('/chats/'+visitorKey+'/messages').then(function(data){
+    if(!data) return;
+    var msgs=Object.values(data).sort(function(a,b){return a.ts-b.ts;});
+    msgs.forEach(function(m){
+      if(m.role==='admin'&&m.ts>lastMsgTs){
+        appendVisitorBubble('admin','373 STUDIO',m.body,m.time);
+        lastMsgTs=m.ts;
+      }
+    });
+  }).catch(function(){});
+}
+
+function appendVisitorBubble(role,name,body,time){
+  var log=document.getElementById('chat-log');
+  var empty=document.getElementById('chat-empty');
+  if(empty) empty.style.display='none';
+  var wrap=document.createElement('div'); wrap.className='chat-bubble-wrap '+role;
+  var meta=document.createElement('div'); meta.className='chat-meta'; meta.textContent=(role==='admin'?'373 STUDIO':esc(name))+' · '+time;
+  var bub=document.createElement('div'); bub.className='chat-bubble '+role; bub.textContent=body;
+  wrap.appendChild(meta); wrap.appendChild(bub); log.appendChild(wrap);
+  log.scrollTop=log.scrollHeight;
+}
+
+// ── MESSAGE FORM ──
+function submitMsg(){
+  var body=document.getElementById('msg-body').value.trim();
+  if(!body){document.getElementById('msg-body').focus();return;}
+  var name=document.getElementById('msg-name').value.trim()||'Anonymous';
+  var email=document.getElementById('msg-email').value.trim();
+  var time=new Date().toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'});
+  var btn=document.getElementById('submit-btn'); btn.disabled=true;
+  fetch('https://formspree.io/f/mgoddjgq',{
+    method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify({name:name,email:email,message:body,time:time,lang:lang})
+  }).then(function(){
+    document.getElementById('form-area').style.display='none';
+    var cm=document.getElementById('confirm-msg'); cm.style.display='block';
+    setTimeout(function(){
+      cm.style.display='none';
+      document.getElementById('form-area').style.display='block';
+      document.getElementById('msg-body').value='';
+      document.getElementById('msg-name').value='';
+      document.getElementById('msg-email').value='';
+    },3000);
+  }).catch(function(){alert('送信に失敗しました。');}).finally(function(){btn.disabled=false;});
+}
+
+// ── ADMIN ──
+function checkPass(){
+  var val=document.getElementById('pass-input').value;
+  if(val===ADMIN_PASS){
+    document.getElementById('admin-login-screen').classList.remove('show');
+    document.getElementById('visitor-section').style.display='none';
+    document.getElementById('lang-bar').style.display='none';
+    document.getElementById('qa-section').style.display='none';
+    document.getElementById('admin-section').style.display='block';
+    initAdminView();
+  } else {
+    document.getElementById('pass-err').style.display='block';
+    document.getElementById('pass-input').value='';
+    document.getElementById('pass-input').focus();
+  }
+}
+
+function initAdminView(){
+  pollAdminStatus();
+  fetchAdminThreads();
+  setInterval(pollAdminStatus,3000);
+  setInterval(function(){
+    fetchAdminThreads();
+    if(openThreadKey) refreshOpenThread(openThreadKey);
+  },4000);
+}
+
+function pollAdminStatus(){
+  fbGet('/status').then(function(s){
+    s=s||'offline';
+    ['online','busy','offline'].forEach(function(k){
+      document.getElementById('abtn-'+k).className='status-btn'+(s===k?' sel-'+k:'');
+    });
+  }).catch(function(){});
+}
+
+function fetchAdminThreads(){
+  fbGet('/chats').then(function(data){
+    if(!data){ allThreads=[]; renderAdminThreads(); return; }
+    allThreads=Object.entries(data).map(function(e){ return Object.assign({_key:e[0]},e[1]); });
+    allThreads.sort(function(a,b){
+      var ta=(a.meta&&a.meta.lastTime)||''; var tb=(b.meta&&b.meta.lastTime)||'';
+      return tb>ta?1:-1;
+    });
+    renderAdminThreads();
+  }).catch(function(){});
+}
+
+function getFilteredThreads(){
+  if(!adminSearchQuery) return allThreads;
+  var q=adminSearchQuery.toLowerCase();
+  return allThreads.filter(function(t){
+    var name=(t.meta&&t.meta.name||'').toLowerCase();
+    return name.indexOf(q)>=0;
+  });
+}
+
+function renderAdminThreads(){
+  var filtered=getFilteredThreads();
+  var total=filtered.length;
+  var totalPages=Math.ceil(total/THREADS_PER_PAGE)||1;
+  if(adminPage>=totalPages) adminPage=totalPages-1;
+  var start=adminPage*THREADS_PER_PAGE;
+  var pageItems=filtered.slice(start,start+THREADS_PER_PAGE);
+
+  document.getElementById('admin-page-indicator').textContent=String(adminPage+1).padStart(2,'0')+' / '+String(totalPages).padStart(2,'0');
+  document.getElementById('admin-prev-btn').disabled=adminPage===0;
+  document.getElementById('admin-next-btn').disabled=adminPage>=totalPages-1;
+
+  var list=document.getElementById('thread-list');
+  // Track existing cards
+  var existingCards={};
+  list.querySelectorAll('.thread-card').forEach(function(c){ existingCards[c.getAttribute('data-key')]=c; });
+  // Remove cards not on current page
+  Object.keys(existingCards).forEach(function(k){
+    var onPage=pageItems.some(function(t){return t._key===k;});
+    if(!onPage){ list.removeChild(existingCards[k]); delete existingCards[k]; }
+  });
+
+  if(pageItems.length===0){
+    list.innerHTML='<div style="text-align:center;padding:40px;font-family:Share Tech Mono,monospace;font-size:11px;color:var(--text-muted);letter-spacing:.2em">NO CONVERSATIONS</div>';
+    return;
+  }
+
+  pageItems.forEach(function(t,i){
+    var msgs=t.messages?Object.values(t.messages).sort(function(a,b){return a.ts-b.ts;}):[]; 
+    var last=msgs[msgs.length-1];
+    var name=(t.meta&&t.meta.name)||t._key.slice(-6).toUpperCase();
+    var existing=existingCards[t._key];
+
+    if(existing){
+      // Update header only — never touch thread-body
+      var ns=existing.querySelector('.thread-name'); if(ns) ns.textContent=name;
+      var prev=existing.querySelector('.thread-preview'); if(prev) prev.textContent=(last&&last.body)||'—';
+      var ts=existing.querySelector('.thread-time'); if(ts) ts.textContent=(t.meta&&t.meta.lastTime)||'';
+      var dot=existing.querySelector('.unread-dot');
+      if(t.meta&&t.meta.unread&&!dot){ var nd=document.createElement('span'); nd.className='unread-dot'; var nr=existing.querySelector('.thread-name'); if(nr) nr.parentNode.insertBefore(nd,nr); }
+      else if(!(t.meta&&t.meta.unread)&&dot){ dot.parentNode.removeChild(dot); }
+    } else {
+      var card=document.createElement('div'); card.className='thread-card'; card.setAttribute('data-key',t._key);
+      // Header
+      var header=document.createElement('div'); header.className='thread-header';
+      header.onclick=(function(key){return function(e){ if(e.target.type==='checkbox') return; toggleThread(key);};})(t._key);
+      // Checkbox for delete mode
+      var cb=document.createElement('input'); cb.type='checkbox'; cb.className='thread-checkbox'; cb.setAttribute('data-key',t._key);
+      cb.onchange=updateDeleteCount;
+      header.appendChild(cb);
+      var left=document.createElement('div'); left.style.minWidth='0';
+      var nameRow=document.createElement('div'); nameRow.style.cssText='display:flex;align-items:center';
+      if(t.meta&&t.meta.unread){var dot2=document.createElement('span');dot2.className='unread-dot';nameRow.appendChild(dot2);}
+      var ns2=document.createElement('span'); ns2.className='thread-name'; ns2.textContent=name; nameRow.appendChild(ns2);
+      var ls=document.createElement('span'); ls.className='thread-lang'; ls.textContent='['+(t.meta&&t.meta.lang||'?')+']'; nameRow.appendChild(ls);
+      var prev2=document.createElement('div'); prev2.className='thread-preview'; prev2.textContent=(last&&last.body)||'—';
+      left.appendChild(nameRow); left.appendChild(prev2);
+      var ts2=document.createElement('span'); ts2.className='thread-time'; ts2.textContent=(t.meta&&t.meta.lastTime)||'';
+      header.appendChild(left); header.appendChild(ts2);
+      // Body
+      var tbody=document.createElement('div'); tbody.className='thread-body'; tbody.id='tb-'+t._key;
+      var logDiv=document.createElement('div'); logDiv.className='thread-log'; logDiv.id='tl-'+t._key;
+      msgs.forEach(function(m){ appendAdminBubble(logDiv,m); });
+      // Reply row — permanent
+      var replyRow=document.createElement('div'); replyRow.className='thread-reply-row';
+      var ri=document.createElement('input'); ri.className='chat-input'; ri.id='ri-'+t._key; ri.placeholder='返信 / Reply…';
+      ri.onkeydown=(function(key){return function(e){if(e.key==='Enter')adminReply(key);};})(t._key);
+      var rb=document.createElement('button'); rb.className='chat-send-btn'; rb.textContent='SEND';
+      rb.onclick=(function(key){return function(){adminReply(key);};})(t._key);
+      replyRow.appendChild(ri); replyRow.appendChild(rb);
+      tbody.appendChild(logDiv); tbody.appendChild(replyRow);
+      card.appendChild(header); card.appendChild(tbody);
+      var ref=list.children[i];
+      if(ref) list.insertBefore(card,ref); else list.appendChild(card);
+    }
+  });
+}
+
+function appendAdminBubble(logEl,m){
+  var wrap=document.createElement('div'); wrap.className='chat-bubble-wrap '+m.role; wrap.setAttribute('data-ts',String(m.ts));
+  var meta=document.createElement('div'); meta.className='chat-meta'; meta.textContent=(m.role==='admin'?'373 STUDIO':esc(m.name||'Guest'))+' · '+m.time;
+  var bub=document.createElement('div'); bub.className='chat-bubble '+m.role; bub.textContent=m.body;
+  wrap.appendChild(meta); wrap.appendChild(bub); logEl.appendChild(wrap);
+}
+
+function refreshOpenThread(key){
+  fbGet('/chats/'+key+'/messages').then(function(data){
+    if(!data) return;
+    var logDiv=document.getElementById('tl-'+key); if(!logDiv) return;
+    var msgs=Object.values(data).sort(function(a,b){return a.ts-b.ts;});
+    var existingTs={};
+    logDiv.querySelectorAll('[data-ts]').forEach(function(el){ existingTs[el.getAttribute('data-ts')]=true; });
+    var added=false;
+    msgs.forEach(function(m){
+      if(!existingTs[String(m.ts)]){ appendAdminBubble(logDiv,m); added=true; }
+    });
+    if(added) logDiv.scrollTop=logDiv.scrollHeight;
+  }).catch(function(){});
+}
+
+function toggleThread(key){
+  var tbody=document.getElementById('tb-'+key); if(!tbody) return;
+  var isOpen=tbody.classList.contains('open');
+  document.querySelectorAll('.thread-body.open').forEach(function(b){ b.classList.remove('open'); });
+  openThreadKey=null;
+  if(!isOpen){
+    tbody.classList.add('open');
+    openThreadKey=key;
+    fbPatch('/chats/'+key+'/meta',{unread:false});
+    var log=document.getElementById('tl-'+key); if(log) log.scrollTop=log.scrollHeight;
+    var ri=document.getElementById('ri-'+key); if(ri) setTimeout(function(){ri.focus();},50);
+  }
+}
+
+function adminReply(key){
+  var input=document.getElementById('ri-'+key);
+  var body=input.value.trim(); if(!body) return;
+  var time=new Date().toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'});
+  var ts=Date.now();
+  var msg={role:'admin',body:body,time:time,ts:ts};
+  fbPush('/chats/'+key+'/messages',msg);
+  fbPatch('/chats/'+key+'/meta',{lastMsg:'[373] '+body,lastTime:time});
+  var logDiv=document.getElementById('tl-'+key);
+  if(logDiv){ appendAdminBubble(logDiv,msg); logDiv.scrollTop=logDiv.scrollHeight; }
+  input.value='';
+}
+
+function adminSearch(){
+  adminSearchQuery=document.getElementById('admin-search').value.trim();
+  adminPage=0;
+  renderAdminThreads();
+}
+
+function adminChangePage(dir){
+  var filtered=getFilteredThreads();
+  var totalPages=Math.ceil(filtered.length/THREADS_PER_PAGE)||1;
+  adminPage=Math.max(0,Math.min(totalPages-1,adminPage+dir));
+  openThreadKey=null;
+  renderAdminThreads();
+}
+
+function setDevStatus(s){ fbSet('/status',s); }
+function enterDeleteMode(){
+  deleteMode=true;
+  document.getElementById('delete-toolbar').classList.add('show');
+  document.getElementById('thread-list').classList.add('delete-mode');
+  updateDeleteCount();
+}
+function exitDeleteMode(){
+  deleteMode=false;
+  document.getElementById('delete-toolbar').classList.remove('show');
+  document.getElementById('thread-list').classList.remove('delete-mode');
+  document.getElementById('select-all-cb').checked=false;
+  document.querySelectorAll('.thread-checkbox').forEach(function(cb){ cb.checked=false; });
+  updateDeleteCount();
+}
+function toggleSelectAll(){
+  var checked=document.getElementById('select-all-cb').checked;
+  document.querySelectorAll('.thread-checkbox').forEach(function(cb){ cb.checked=checked; });
+  updateDeleteCount();
+}
+function updateDeleteCount(){
+  var n=document.querySelectorAll('.thread-checkbox:checked').length;
+  document.getElementById('delete-count-label').textContent=n+' selected';
+}
+function confirmDelete(){
+  var keys=[];
+  document.querySelectorAll('.thread-checkbox:checked').forEach(function(cb){ keys.push(cb.getAttribute('data-key')); });
+  if(keys.length===0) return;
+  if(!confirm('Delete '+keys.length+' conversation(s)?')) return;
+  Promise.all(keys.map(function(k){ return fbDelete('/chats/'+k); })).then(function(){
+    exitDeleteMode();
+    fetchAdminThreads();
+  });
+}
+function doLogout(){ location.href=location.pathname; }
+function updateClock(){ document.getElementById('clock').textContent=new Date().toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}); }
+
+// ── INIT ──
+if(IS_ADMIN){
+  document.getElementById('admin-login-screen').classList.add('show');
+  setTimeout(function(){document.getElementById('pass-input').focus();},100);
+} else {
+  fbGet('/status').then(function(s){ applyStatus(s||'offline'); }).catch(function(){});
+  setInterval(function(){ fbGet('/status').then(function(s){ applyStatus(s||'offline'); }).catch(function(){}); },5000);
+  document.addEventListener('click',resetIdle);
+  document.addEventListener('keydown',resetIdle);
+}
+applyUI(); renderQA(); updateClock(); setInterval(updateClock,1000);
+
+</script>
+</body>
+</html>
